@@ -3,21 +3,18 @@ import os
 os.environ['TRACELOOP_TELEMETRY'] = "false"
 os.environ['OTEL_EXPORTER_OTLP_METRICS_TEMPORALITY_PREFERENCE'] = "delta"
 
-def read_secret(secret: str):
-    try:
-        with open(f"/etc/secrets/{secret}", "r") as f:
-            return f.read().rstrip()
-    except Exception as e:
-        print("No token was provided")
-        print(e)
-        return ""
+from dotenv import load_dotenv
+load_dotenv()
 
-token = read_secret("dynatrace_otel")
+token = os.getenv("DYNATRACE_API_TOKEN", "")
+if not token:
+    raise RuntimeError("Missing DYNATRACE_API_TOKEN in environment variables or .env file")
+
 headers = {"Authorization": f"Api-Token {token}"}
 from traceloop.sdk import Traceloop
 Traceloop.init(
-    app_name="openai-cs-agents",
-    api_endpoint="https://wkf10640.live.dynatrace.com/api/v2/otlp",
+    app_name="openai-cs-agents-adi",
+    api_endpoint="https://qad61679.live.dynatrace.com/api/v2/otlp",
     disable_batch=True,
     headers=headers,
     should_enrich_metrics=True,
@@ -35,13 +32,10 @@ from uuid import uuid4
 import time
 import logging
 
-from openai import AsyncAzureOpenAI
+from openai import AsyncOpenAI
 from agents import set_default_openai_client
-openai_client = AsyncAzureOpenAI(
-    api_key=os.getenv("AZURE_OPENAI_API_KEY"),
-    api_version=os.getenv("AZURE_OPENAI_API_VERSION"),
-    azure_endpoint=os.getenv("AZURE_OPENAI_ENDPOINT"),
-    azure_deployment=os.getenv("AZURE_OPENAI_DEPLOYMENT")
+openai_client = AsyncOpenAI(
+    api_key=os.environ["OPENAI_API_KEY"],
 )
 
 # Set the default OpenAI client for the Agents SDK

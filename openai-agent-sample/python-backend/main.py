@@ -17,21 +17,20 @@ from agents import (
 from agents.extensions.handoff_prompt import RECOMMENDED_PROMPT_PREFIX
 
 import os
-
-from openai import AsyncAzureOpenAI
+from dotenv import load_dotenv
+from openai import AsyncOpenAI
 from agents import set_default_openai_client, OpenAIChatCompletionsModel
-openai_client = AsyncAzureOpenAI(
-    api_key=os.getenv("AZURE_OPENAI_API_KEY"),
-    api_version=os.getenv("AZURE_OPENAI_API_VERSION"),
-    azure_endpoint=os.getenv("AZURE_OPENAI_ENDPOINT"),
-    azure_deployment=os.getenv("AZURE_OPENAI_DEPLOYMENT")
+load_dotenv()
+openai_client = AsyncOpenAI(
+    api_key=os.environ["OPENAI_API_KEY"],
 )
 
 # Set the default OpenAI client for the Agents SDK
 set_default_openai_client(openai_client)
 
+MODEL = os.getenv("OPENAI_MODEL", "gpt-4.1-mini")
 __model = OpenAIChatCompletionsModel(
-    model='genai-demo',
+    model=MODEL,
     openai_client=openai_client,
 )
 
