@@ -1,25 +1,58 @@
 import os
 
-os.environ['TRACELOOP_TELEMETRY'] = "false"
-os.environ['OTEL_EXPORTER_OTLP_METRICS_TEMPORALITY_PREFERENCE'] = "delta"
+# ===========================================================
+# AI OBSERVABILITY LAB — SETUP STEPS
+# -----------------------------------------------------------
+# 1. Open the ".env" file in the project root.
+# 2. Replace the placeholder values for the env variables
+#    with your actual values from dynatrace-tokens.txt.
+#
+# 3. After updating .env, UNCOMMENT the entire
+#    "Instrumentation Block" below (look for the marker).
+#
+# 4. Update service name in 'Traceloop.init()' with a unique name (your first name, initials, etc.)
+#
+# Until then, the app runs WITHOUT sending telemetry.
+# ===========================================================
 
 from dotenv import load_dotenv
 load_dotenv()
 
+# ---- Load & validate environment variables ----
+
+# API Token
 token = os.getenv("DYNATRACE_API_TOKEN", "")
 if not token:
     raise RuntimeError("Missing DYNATRACE_API_TOKEN in environment variables or .env file")
 
-headers = {"Authorization": f"Api-Token {token}"}
-from traceloop.sdk import Traceloop
-Traceloop.init(
-    app_name="openai-cs-agents-adi",
-    api_endpoint="https://qad61679.live.dynatrace.com/api/v2/otlp",
-    disable_batch=True,
-    headers=headers,
-    should_enrich_metrics=True,
-)
+# Tenant ID
+tenant_id = os.getenv("DYNATRACE_TENANT_ID", "")
+if not tenant_id:
+    raise RuntimeError("Missing DYNATRACE_TENANT_ID in environment variables or .env file")
 
+# Construct the OTLP endpoint dynamically
+api_endpoint = f"https://{tenant_id}.live.dynatrace.com/api/v2/otlp"
+
+# ===========================================================
+# === BEGIN INSTRUMENTATION BLOCK (UNCOMMENT FOR LAB) =======
+# -----------------------------------------------------------
+# os.environ['TRACELOOP_TELEMETRY'] = "false"
+# os.environ['OTEL_EXPORTER_OTLP_METRICS_TEMPORALITY_PREFERENCE'] = "delta"
+#
+# from traceloop.sdk import Traceloop
+#
+# headers = {"Authorization": f"Api-Token {token}"}
+#
+# Traceloop.init(
+#     app_name="openai-cs-agents-<update-name-here>",
+#     api_endpoint=api_endpoint,
+#     disable_batch=True,
+#     headers=headers,
+#     should_enrich_metrics=True,
+# )
+# ===========================================================
+# === END INSTRUMENTATION BLOCK =============================
+# ===========================================================
 
 from opentelemetry import trace
 tracer = trace.get_tracer("openai-agents")
@@ -133,7 +166,7 @@ class InMemoryConversationStore(ConversationStore):
     def save(self, conversation_id: str, state: Dict[str, Any]):
         self._conversations[conversation_id] = state
 
-# TODO: when deploying this app in scale, switch to your own production-ready implementation
+# when deploying this app in scale, switch to your own production-ready implementation
 conversation_store = InMemoryConversationStore()
 
 # =========================
